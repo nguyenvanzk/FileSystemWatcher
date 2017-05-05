@@ -21,22 +21,22 @@ var eventCount : Int
 eventCount = 0
 
 func printEvent(event: FileSystemEvent) {
-	print("Hey! Something happened!!") 
-  // I'd love to use event.name, but I can't figure out yet how to read that from C's API
-	// That'd be useful for debugging purposes.
-  // But it's allright as long as you don't need to know the exact description of the ocurring events.
-  eventCount += 1
+    print("Hey! Something happened!!")
+
+    eventCount += 1
 }
 
 
 print("Starting!")
 
-let myWatcher = FileSystemWatcher()
+let delayBetweenEvents = 5.0
+
+let myWatcher = FileSystemWatcher(deferringDelay: delayBetweenEvents)
 
 myWatcher.watch(
-	paths: ["/tmp"], 
-	for: [FileSystemEventType.inAllEvents],
-	thenInvoke: printEvent)
+    paths: ["/tmp"], 
+    for: [FileSystemEventType.inAllEvents],
+    thenInvoke: printEvent)
 
 
 myWatcher.start()
@@ -50,3 +50,15 @@ print("Total number of events: " + String(eventCount))
 print("Finished!")
 
 ```
+
+## Limitations
+
+### Only deferred mechanism
+
+For now, I'm only interested in supporting a deferred kind of FS event queue. Maybe in a future release, special flags for customizing the watcher's behavior could be implemented.
+
+### Events don't have name
+
+As you can see in [this line](https://github.com/felix91gr/FileSystemWatcher/blob/1.1.0/Sources/fswatcher.swift#L148), the `struct inotify_event` "has no member `name`". This is not quite true, though: the member `name` is **optional**. I don't know yet how to obtain that `CString` from the struct. It would be useful, if we wanted to know more about the characteristics of the captured FS events.
+
+For our use case (at [SourceKittenDaemon](https://github.com/terhechte/SourceKittenDaemon)) that is not necessary: we only need to know when a file has changed. But it would be nice to have that feature. If you know how to do it, please open an Issue o a Pull Request: I'll be happy to recieve your help.
