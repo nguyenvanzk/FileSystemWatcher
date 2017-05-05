@@ -1,4 +1,5 @@
 import Dispatch
+import Foundation
 import inotify
 
 public typealias FileDescriptor = Int
@@ -60,7 +61,9 @@ public class FileSystemWatcher {
   private var watchDescriptors: [WatchDescriptor]
   private var shouldStopWatching: Bool = false
 
-  public init() {
+  private let deferringDelay : Double
+
+  public init(deferringDelay : Double = 2.0) {
     dispatchQueue = DispatchQueue(label: "inotify.queue", qos: .background,
       attributes: [.initiallyInactive, .concurrent])
     fileDescriptor = FileDescriptor(inotify_init())
@@ -69,6 +72,8 @@ public class FileSystemWatcher {
     }
 
     watchDescriptors = [WatchDescriptor]()
+  
+    self.deferringDelay = deferringDelay 
   }
 
   public func start() {
@@ -100,37 +105,59 @@ public class FileSystemWatcher {
       watchDescriptors.append(WatchDescriptor(watchDescriptor))
       wds.append(WatchDescriptor(watchDescriptor))
 
+      // For deferred execution
+      var lastTimeStamp = Date()
+ 
       dispatchQueue.async {
         let bufferLength = 32
         let buffer = UnsafeMutablePointer<CChar>.allocate(capacity: bufferLength)
 
+        var fileSystemEvent : FileSystemEvent?
+
         while !self.shouldStopWatching {
-          var currentIndex: Int = 0
-          let readLength = read(Int32(self.fileDescriptor), buffer, bufferLength)
-
-          while currentIndex < readLength {
-            let event = withUnsafePointer(to: &buffer[currentIndex]) {
-              return $0.withMemoryRebound(to: inotify_event.self, capacity: 1) {
-                return $0.pointee
+          // IF it's been more than 2 seconds since the last callback,
+          // run the callback again.
+          if(lastTimeStamp.timeIntervalSinceNow < -self.deferringDelay) {
+            lastTimeStamp = Date()            
+          
+            // This checks if there exists an event
+            // before sending it. It's very important,
+            // because it makes the first run possible.
+            if let lastEvent = fileSystemEvent {
+              self.dispatchQueue.asyncAfter(deadline: .now() + self.deferringDelay) { 
+                  callback(lastEvent)
               }
             }
-
-            if event.len > 0 {
-              let fileSystemEvent = FileSystemEvent(
-                watchDescriptor: WatchDescriptor(event.wd),
-                name: "", // String(cString: event.name), // value of type 'inotify_event' has no member 'name'
-                mask: event.mask,
-                cookie: event.cookie,
-                length: event.len
-              )
-
-              self.dispatchQueue.async {
-                callback(fileSystemEvent)
-              }
-            }
-
-            currentIndex += MemoryLayout<inotify_event>.stride + Int(event.len)
           }
+          // IF NOT, then we defer the events until enough time passes
+          // for the callback window to open again
+          else {
+            var currentIndex: Int = 0
+            let readLength = read(Int32(self.fileDescriptor), buffer, bufferLength)
+
+            while currentIndex < readLength {
+              let event = withUnsafePointer(to: &buffer[currentIndex]) {
+                return $0.withMemoryRebound(to: inotify_event.self, capacity: 1) {
+                  return $0.pointee
+                }
+              }
+
+              if event.len > 0 {
+                fileSystemEvent = FileSystemEvent(
+                  watchDescriptor: WatchDescriptor(event.wd),
+                  name: "", // String(cString: event.name), // value of type 'inotify_event' has no member 'name'
+                  mask: event.mask,
+                  cookie: event.cookie,
+                  length: event.len
+                )
+              }
+
+              currentIndex += MemoryLayout<inotify_event>.stride + Int(event.len)
+            }
+
+          }
+
+          
         }
       }
     }
