@@ -57,8 +57,12 @@ print("Finished!")
 
 For now, I'm only interested in supporting a deferred kind of FS event queue. Maybe in a future release, special flags for customizing the watcher's behavior could be implemented.
 
-### Events don't have name
+### Fixed: Events _~don't~_ have name
 
-As you can see in [this line](https://github.com/felix91gr/FileSystemWatcher/blob/1.1.0/Sources/fswatcher.swift#L148), the `struct inotify_event` "has no member `name`". This is not quite true, though: the member `name` is **optional**. I don't know yet how to obtain that `CString` from the struct. It would be useful, if we wanted to know more about the characteristics of the captured FS events.
+Thanks to the Stack Overflow community for helping me fix this issue: [C struct instance is missing members after copying it to Swift](http://stackoverflow.com/questions/43816692/c-struct-instance-is-missing-members-after-copying-it-to-swift).
 
-For our use case (at [SourceKittenDaemon](https://github.com/terhechte/SourceKittenDaemon)) that is not necessary: we only need to know when a file has changed. But it would be nice to have that feature. If you know how to do it, please open an Issue or a Pull Request: I'll be happy to recieve your help.
+Original problem:
+
+> As you can see in [this line](https://github.com/felix91gr/FileSystemWatcher/blob/1.1.0/Sources/fswatcher.swift#L148), the `struct inotify_event` "has no member `name`". This is not quite true, though: the member `name` is **optional**. I don't know yet how to obtain that `CString` from the struct. It would be useful, if we wanted to know more about the characteristics of the captured FS events.
+
+> For our use case (at [SourceKittenDaemon](https://github.com/terhechte/SourceKittenDaemon)) that is not necessary: we only need to know when a file has changed. But it would be nice to have that feature. If you know how to do it, please open an Issue or a Pull Request: I'll be happy to recieve your help.
