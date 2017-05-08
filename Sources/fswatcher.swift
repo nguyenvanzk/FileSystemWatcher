@@ -109,13 +109,13 @@ public class FileSystemWatcher {
       var lastTimeStamp = Date()
  
       dispatchQueue.async {
-        let bufferLength = 32
+        let bufferLength = Int(MemoryLayout<inotify_event>.size) + Int(NAME_MAX) + 1
         let buffer = UnsafeMutablePointer<CChar>.allocate(capacity: bufferLength)
 
         var fileSystemEvent : FileSystemEvent?
 
         while !self.shouldStopWatching {
-          // IF it's been more than 2 seconds since the last callback,
+          // IF it's been more than "delay" seconds since the last callback,
           // run the callback again.
           if(lastTimeStamp.timeIntervalSinceNow < -self.deferringDelay) {
             lastTimeStamp = Date()            
@@ -142,10 +142,12 @@ public class FileSystemWatcher {
                 }
               }
 
+
               if event.len > 0 {
+
                 fileSystemEvent = FileSystemEvent(
                   watchDescriptor: WatchDescriptor(event.wd),
-                  name: "", // String(cString: event.name), // value of type 'inotify_event' has no member 'name'
+                  name: String(cString: buffer + currentIndex + MemoryLayout<inotify_event>.size),
                   mask: event.mask,
                   cookie: event.cookie,
                   length: event.len
