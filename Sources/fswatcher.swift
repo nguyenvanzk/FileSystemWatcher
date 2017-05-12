@@ -56,7 +56,7 @@ public enum FileSystemEventType: UInt32 {
 
 public class FileSystemWatcher {
   private let fileDescriptor: FileDescriptor
-  private let dispatchQueue: DispatchQueue
+  private unowned let dispatchQueue: DispatchQueue
 
   private var watchDescriptors: [WatchDescriptor]
   private var shouldStopWatching: Bool = false
