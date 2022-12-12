@@ -1,10 +1,11 @@
-// swift-tools-version: 5.7.1
+// swift-tools-version:5.6
 
 import PackageDescription
 
 let package = Package(
-    name: "FileSystemWatcher",
-    dependencies: [
-      .Package(url: "https://github.com/felix91gr/inotify.git", majorVersion: 1)
-    ]
-)
+    name: "FileSystemWatcher")
+
+package.dependencies = [
+      .package(url: "https://github.com/nguyenvanzk/inotify.git", .upToNextMajor(from: "1.0.2"))
+]
+
