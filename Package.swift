@@ -8,12 +8,16 @@ let package = Package(
         .library(name: "FileSystemWatcher", targets: ["FileSystemWatcher"])
     ],
     dependencies: [
-      .package(url: "https://github.com/nguyenvanzk/inotify.git", .upToNextMajor(from: "1.0.2"))
+      .package(url: "https://github.com/nguyenvanzk/inotify.git", .upToNextMajor(from: "1.0.4"))
     ],
     targets: [
-        .target(name: "FileSystemWatcher", dependencies: [
-            .product(name: "inotify", package: "inotify"),
-        ])
+        .target(
+            name: "FileSystemWatcher",
+            dependencies: [
+                .product(name: "inotify", package: "inotify"),
+            ],
+            path: "Sources")
     ]
 )
+
 
