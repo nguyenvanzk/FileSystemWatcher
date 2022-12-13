@@ -56,7 +56,7 @@ public enum FileSystemEventType: UInt32 {
 
 public class FileSystemWatcher {
   private let fileDescriptor: FileDescriptor
-  private unowned let dispatchQueue: DispatchQueue
+  private let dispatchQueue: DispatchQueue
 
   private var watchDescriptors: [WatchDescriptor]
   private var shouldStopWatching: Bool = false
@@ -72,8 +72,8 @@ public class FileSystemWatcher {
     }
 
     watchDescriptors = [WatchDescriptor]()
-  
-    self.deferringDelay = deferringDelay 
+
+    self.deferringDelay = deferringDelay
   }
 
   public func start() {
@@ -107,7 +107,7 @@ public class FileSystemWatcher {
 
       // For deferred execution
       var lastTimeStamp = Date()
- 
+
       dispatchQueue.async {
         let bufferLength = Int(MemoryLayout<inotify_event>.size) + Int(NAME_MAX) + 1
         let buffer = UnsafeMutablePointer<CChar>.allocate(capacity: bufferLength)
@@ -118,13 +118,13 @@ public class FileSystemWatcher {
           // IF it's been more than "delay" seconds since the last callback,
           // run the callback again.
           if(lastTimeStamp.timeIntervalSinceNow < -self.deferringDelay) {
-            lastTimeStamp = Date()            
-          
+            lastTimeStamp = Date()
+
             // This checks if there exists an event
             // before sending it. It's very important,
             // because it makes the first run possible.
             if let lastEvent = fileSystemEvent {
-              self.dispatchQueue.asyncAfter(deadline: .now() + self.deferringDelay) { 
+              self.dispatchQueue.asyncAfter(deadline: .now() + self.deferringDelay) {
                   callback(lastEvent)
               }
             }
@@ -159,7 +159,7 @@ public class FileSystemWatcher {
 
           }
 
-          
+
         }
       }
     }

@@ -3,9 +3,9 @@
 import PackageDescription
 
 let package = Package(
-    name: "FileSystemWatcher",
+    name: "filesystemwatcher",
     products: [
-        .library(name: "FileSystemWatcher", targets: ["FileSystemWatcher"])
+        .library(name: "filesystemwatcher", targets: ["FileSystemWatcher"])
     ],
     dependencies: [
       .package(url: "https://github.com/nguyenvanzk/inotify.git", .upToNextMajor(from: "1.0.4"))
